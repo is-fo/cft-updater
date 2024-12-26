@@ -14,18 +14,44 @@ public class ChromeDriverUpdater {
     private final String root;
     private final Platform platform;
 
+    private String chromeDir;
+
+    private final String fs = File.separator;
+
     public ChromeDriverUpdater(String root, Platform platform) {
-        this.root = root;
+        this.root = validateRoot(root);
         this.platform = platform;
+    }
+
+    private String validateRoot(String root) {
+        File rootDir = new File(root);
+        File potentialChromeDir = new File(rootDir, "chrome");
+        if (potentialChromeDir.getName().equals(rootDir.getName())) {
+            throw new IllegalArgumentException("Select the parent directory of 'chrome' or delete the 'chrome' directory");
+        }
+
+        if (!potentialChromeDir.exists()) {
+            try {
+                if (potentialChromeDir.mkdir()) {
+                    System.out.println("Created directory at: " + potentialChromeDir.getAbsolutePath());
+                } else {
+                    System.out.println("Failed to create directory at: " + potentialChromeDir.getAbsolutePath());
+                }
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
+        chromeDir = potentialChromeDir.getAbsolutePath();
+
+        return root;
     }
 
     /**
      * @return the name of the manifest file which should correspond to the version number of both chrome and chromedriver
      */
-
     public String readManifest() {
-        File directory = new File(
-                root + "/chrome-" + platform + "/chrome-" + platform + "/");
+        String manifestLocation = chromeDir + fs + "chrome-" + platform + fs + "chrome-" + platform + fs;
+        File directory = new File(manifestLocation);
         if (directory.exists() && directory.isDirectory()) {
             String[] files = directory.list();
             if (files != null) {
@@ -70,17 +96,10 @@ public class ChromeDriverUpdater {
                 + version + "/" + platform + "/" + type + ".zip";
         try {
             System.out.println("Downloading " + type + " from " + urlString);
-            URL chromeDriver = new URI(urlString).toURL();
+            URL chromeDownload = new URI(urlString).toURL();
 
-            File directory = new File(root + "/chrome");
-            if (!directory.exists()) {
-                if (directory.mkdirs()) {
-                    System.out.println("Created directory " + directory);
-                }
-            }
-
-            try (InputStream inputStream = chromeDriver.openStream();
-            FileOutputStream outputStream = new FileOutputStream(directory + "/" + type + ".zip")) {
+            try (InputStream inputStream = chromeDownload.openStream();
+                 FileOutputStream outputStream = new FileOutputStream(chromeDir + fs + type + ".zip")) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -94,11 +113,11 @@ public class ChromeDriverUpdater {
 
     public void extractCtF(String type) throws IOException {
         System.out.println("Extracting " + type);
-        try(ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(root + "/chrome/" + type + ".zip"))) {
+        try(ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(chromeDir + fs + type + ".zip"))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
 
-                File file = new File(root + "/chrome/" + type + "/" + zipEntry.getName());
+                File file = new File(chromeDir + fs + type + fs + zipEntry.getName());
                 if (zipEntry.isDirectory()) {
                     if (!file.isDirectory() && !file.mkdirs()) {
                         throw new IOException("Failed to create directory " + file);
@@ -124,7 +143,7 @@ public class ChromeDriverUpdater {
     }
 
     public void deleteZip(String type) {
-        File toDelete = new File(root + "/chrome/" + type + ".zip");
+        File toDelete = new File(chromeDir + fs + type + ".zip");
         if (toDelete.exists() && toDelete.delete()) {
             System.out.println("Deleted " + toDelete.getName() + " successfully.");
         } else {

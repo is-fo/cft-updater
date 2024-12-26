@@ -1,3 +1,6 @@
+/**
+ * <a href=https://googlechromelabs.github.io/chrome-for-testing>Platform names derived from here</a>
+ */
 public enum Platform {
 
     LINUX64("linux64"),

@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 
 public class UpdaterGUI {
@@ -45,6 +46,7 @@ public class UpdaterGUI {
         browseButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
 
             int returnValue = fileChooser.showOpenDialog(frame);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -85,7 +87,7 @@ public class UpdaterGUI {
                     }
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(frame,
-                            "An error occurred: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                            "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace();
                 }
             }
