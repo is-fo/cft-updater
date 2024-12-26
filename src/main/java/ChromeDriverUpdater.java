@@ -120,9 +120,20 @@ public class ChromeDriverUpdater {
         System.out.println(type + " downloaded and extracted successfully.");
     }
 
+    private static void deleteZip(String type) {
+        File toDelete = new File("chrome/" + type + ".zip");
+        if (toDelete.exists() && toDelete.delete()) {
+            System.out.println("Deleted " + toDelete + " successfully.");
+        } else {
+            System.out.println("Failed to delete: " + toDelete);
+            System.out.println("Delete manually at: " + toDelete.getAbsolutePath());
+        }
+    }
+
     private static void install(String version, String type) throws IOException {
         downloadCtF(version, type);
         extractCtF(type);
+        deleteZip(type);
     }
 
     private static void install(String latestVersion) throws IOException {
