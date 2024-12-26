@@ -2,7 +2,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-chrome/
+chrome/chrome-win64/
+chrome/chromedriver-win64/
+chrome/chrome-win64.zip
+chrome/chromedriver-win64.zip
+
 .idea/
 
 ### IntelliJ IDEA ###
