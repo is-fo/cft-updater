@@ -11,7 +11,6 @@ import java.util.zip.ZipInputStream;
  */
 public class ChromeDriverUpdater {
 
-    private final String root;
     private final Platform platform;
 
     private String chromeDir;
@@ -19,14 +18,14 @@ public class ChromeDriverUpdater {
     private final String fs = File.separator;
 
     public ChromeDriverUpdater(String root, Platform platform) {
-        this.root = validateRoot(root);
+        validateRoot(root);
         this.platform = platform;
     }
 
-    private String validateRoot(String root) {
+    private void validateRoot(String root) {
         File rootDir = new File(root);
         File potentialChromeDir = new File(rootDir, "chrome");
-        if (potentialChromeDir.getName().equals(rootDir.getName())) {
+        if (potentialChromeDir.getName().equals(rootDir.getName())) { //if user selected chrome directory
             throw new IllegalArgumentException("Select the parent directory of 'chrome' or delete the 'chrome' directory");
         }
 
@@ -42,8 +41,6 @@ public class ChromeDriverUpdater {
             }
         }
         chromeDir = potentialChromeDir.getAbsolutePath();
-
-        return root;
     }
 
     /**
@@ -68,6 +65,10 @@ public class ChromeDriverUpdater {
         return "failed to get version from manifest";
     }
 
+    /**
+     * GETs the latest version of Chrome for Testing.
+     * @return returns the latest version as a String
+     */
     public String getLatestVersion() throws IOException {
         String urlString = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE";
         try {
@@ -91,6 +92,10 @@ public class ChromeDriverUpdater {
         return "failed to get latest version";
     }
 
+    /**
+     * @param version The version number retrieved from getLatestVersion() but any valid version number *should* work
+     * @param type Valid types are chrome, chromedriver or chrome-headless-shell
+     */
     public void downloadCtF(String version, String type) throws IOException {
         String urlString = "https://storage.googleapis.com/chrome-for-testing-public/"
                 + version + "/" + platform + "/" + type + ".zip";
@@ -111,6 +116,9 @@ public class ChromeDriverUpdater {
         }
     }
 
+    /**
+     * Unzips
+     */
     public void extractCtF(String type) throws IOException {
         System.out.println("Extracting " + type);
         try(ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(chromeDir + fs + type + ".zip"))) {
@@ -142,6 +150,9 @@ public class ChromeDriverUpdater {
         System.out.println(type + " downloaded and extracted successfully.");
     }
 
+    /**
+     * Deletes the downloaded zip-files
+     */
     public void deleteZip(String type) {
         File toDelete = new File(chromeDir + fs + type + ".zip");
         if (toDelete.exists() && toDelete.delete()) {
@@ -152,14 +163,19 @@ public class ChromeDriverUpdater {
         }
     }
 
+    /**
+     * Downloads, extracts and deletes zip files automatically.
+     */
     private void install(String version, String type) throws IOException {
         downloadCtF(version, type);
         extractCtF(type);
         deleteZip(type);
     }
 
+    //TODO let the user choose the files they want
     public void install(String version) throws IOException {
         install(version, "chrome-" + platform);
         install(version, "chromedriver-" + platform);
+        install(version, "chrome-headless-shell-" + platform);
     }
 }

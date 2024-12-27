@@ -7,7 +7,7 @@ import java.io.IOException;
 public class UpdaterGUI {
 
     private JFrame frame;
-    private JComboBox platformComboBox;
+    private JComboBox<Platform> platformComboBox;
 
     private ChromeDriverUpdater chromeDriverUpdater;
     private String selectedDirectory;
@@ -43,7 +43,7 @@ public class UpdaterGUI {
 
     private JButton createBrowseButton() {
         JButton browseButton = new JButton("Browse");
-        browseButton.addActionListener(e -> {
+        browseButton.addActionListener(_ -> {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
@@ -60,7 +60,7 @@ public class UpdaterGUI {
 
     private JButton createInstallButton() {
         JButton installButton = new JButton("Install");
-        installButton.addActionListener(e -> {
+        installButton.addActionListener(_ -> {
 
 
             if (selectedDirectory == null) {
