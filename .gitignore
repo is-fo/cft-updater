@@ -6,6 +6,8 @@ chrome/chrome-win64/
 chrome/chromedriver-win64/
 chrome/chrome-win64.zip
 chrome/chromedriver-win64.zip
+chrome/chrome-headless-shell-win64
+chrome
 
 .idea/
 

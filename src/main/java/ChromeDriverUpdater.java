@@ -11,25 +11,44 @@ import java.util.zip.ZipInputStream;
  */
 public class ChromeDriverUpdater {
 
-    public static void main(String[] args) {
-        try {
-            String latestVersion = getLatestVersion();
-            String currentVersion = readManifest(new File("chrome/chrome-win64/chrome-win64/"));
-            if (!currentVersion.equals(latestVersion)) {
-                install(latestVersion);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
+    private final Platform platform;
+
+    private String chromeDir;
+
+    private final String fs = File.separator;
+
+    public ChromeDriverUpdater(String root, Platform platform) {
+        validateRoot(root);
+        this.platform = platform;
+    }
+
+    private void validateRoot(String root) {
+        File rootDir = new File(root);
+        File potentialChromeDir = new File(rootDir, "chrome");
+        if (potentialChromeDir.getName().equals(rootDir.getName())) { //if user selected chrome directory
+            throw new IllegalArgumentException("Select the parent directory of 'chrome' or delete the 'chrome' directory");
         }
+
+        if (!potentialChromeDir.exists()) {
+            try {
+                if (potentialChromeDir.mkdir()) {
+                    System.out.println("Created directory at: " + potentialChromeDir.getAbsolutePath());
+                } else {
+                    System.out.println("Failed to create directory at: " + potentialChromeDir.getAbsolutePath());
+                }
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
+        chromeDir = potentialChromeDir.getAbsolutePath();
     }
 
     /**
-     *
-     * @param directory should be chrome/chrome-win64/chrome-win64/ (for now)
      * @return the name of the manifest file which should correspond to the version number of both chrome and chromedriver
      */
-
-    private static String readManifest(File directory) {
+    public String readManifest() {
+        String manifestLocation = chromeDir + fs + "chrome-" + platform + fs + "chrome-" + platform + fs;
+        File directory = new File(manifestLocation);
         if (directory.exists() && directory.isDirectory()) {
             String[] files = directory.list();
             if (files != null) {
@@ -46,7 +65,11 @@ public class ChromeDriverUpdater {
         return "failed to get version from manifest";
     }
 
-    private static String getLatestVersion() throws IOException {
+    /**
+     * GETs the latest version of Chrome for Testing.
+     * @return returns the latest version as a String
+     */
+    public String getLatestVersion() throws IOException {
         String urlString = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE";
         try {
             URL url = new URI(urlString).toURL();
@@ -69,15 +92,19 @@ public class ChromeDriverUpdater {
         return "failed to get latest version";
     }
 
-    private static void downloadCtF(String version, String type) throws IOException {
+    /**
+     * @param version The version number retrieved from getLatestVersion() but any valid version number *should* work
+     * @param type Valid types are chrome, chromedriver or chrome-headless-shell
+     */
+    public void downloadCtF(String version, String type) throws IOException {
         String urlString = "https://storage.googleapis.com/chrome-for-testing-public/"
-                + version + "/win64/" + type + ".zip";
+                + version + "/" + platform + "/" + type + ".zip";
         try {
             System.out.println("Downloading " + type + " from " + urlString);
-            URL chromeDriver = new URI(urlString).toURL();
+            URL chromeDownload = new URI(urlString).toURL();
 
-            try (InputStream inputStream = chromeDriver.openStream();
-            FileOutputStream outputStream = new FileOutputStream("chrome/" + type + ".zip")) {
+            try (InputStream inputStream = chromeDownload.openStream();
+                 FileOutputStream outputStream = new FileOutputStream(chromeDir + fs + type + ".zip")) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
                 while ((bytesRead = inputStream.read(buffer)) != -1) {
@@ -89,13 +116,16 @@ public class ChromeDriverUpdater {
         }
     }
 
-    private static void extractCtF(String type) throws IOException {
+    /**
+     * Unzips
+     */
+    public void extractCtF(String type) throws IOException {
         System.out.println("Extracting " + type);
-        try(ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream("chrome/" + type + ".zip"))) {
+        try(ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(chromeDir + fs + type + ".zip"))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
 
-                File file = new File("chrome\\" + type + "\\" + zipEntry.getName());
+                File file = new File(chromeDir + fs + type + fs + zipEntry.getName());
                 if (zipEntry.isDirectory()) {
                     if (!file.isDirectory() && !file.mkdirs()) {
                         throw new IOException("Failed to create directory " + file);
@@ -120,24 +150,32 @@ public class ChromeDriverUpdater {
         System.out.println(type + " downloaded and extracted successfully.");
     }
 
-    private static void deleteZip(String type) {
-        File toDelete = new File("chrome/" + type + ".zip");
+    /**
+     * Deletes the downloaded zip-files
+     */
+    public void deleteZip(String type) {
+        File toDelete = new File(chromeDir + fs + type + ".zip");
         if (toDelete.exists() && toDelete.delete()) {
-            System.out.println("Deleted " + toDelete + " successfully.");
+            System.out.println("Deleted " + toDelete.getName() + " successfully.");
         } else {
-            System.out.println("Failed to delete: " + toDelete);
+            System.out.println("Failed to delete: " + toDelete.getName());
             System.out.println("Delete manually at: " + toDelete.getAbsolutePath());
         }
     }
 
-    private static void install(String version, String type) throws IOException {
+    /**
+     * Downloads, extracts and deletes zip files automatically.
+     */
+    private void install(String version, String type) throws IOException {
         downloadCtF(version, type);
         extractCtF(type);
         deleteZip(type);
     }
 
-    private static void install(String latestVersion) throws IOException {
-        install(latestVersion, "chrome-win64");
-        install(latestVersion, "chromedriver-win64");
+    //TODO let the user choose the files they want
+    public void install(String version) throws IOException {
+        install(version, "chrome-" + platform);
+        install(version, "chromedriver-" + platform);
+        install(version, "chrome-headless-shell-" + platform);
     }
 }
