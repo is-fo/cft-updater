@@ -44,6 +44,7 @@ public class ChromeDriverUpdater {
     }
 
     /**
+     * doesnt work at all for headless versions, will remove or fix at some point
      * @return the name of the manifest file which should correspond to the version number of both chrome and chromedriver
      */
     public String readManifest() {
@@ -172,8 +173,17 @@ public class ChromeDriverUpdater {
         deleteZip(type);
     }
 
-    //TODO let the user choose the files they want
-    public void install(String version) throws IOException {
+    public void installHeadful(String version) throws IOException {
+        install(version, "chromedriver-" + platform);
+        install(version, "chrome-" + platform);
+    }
+
+    public void installHeadless(String version) throws IOException {
+        install(version, "chromedriver-" + platform);
+        install(version, "chrome-headless-shell-" + platform);
+    }
+
+    public void installAll(String version) throws IOException {
         install(version, "chrome-" + platform);
         install(version, "chromedriver-" + platform);
         install(version, "chrome-headless-shell-" + platform);

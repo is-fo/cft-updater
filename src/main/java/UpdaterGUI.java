@@ -8,6 +8,9 @@ public class UpdaterGUI {
 
     private JFrame frame;
     private JComboBox<Platform> platformComboBox;
+    private ButtonGroup typeButtonGroup;
+    private JRadioButton headlessMode;
+    private JRadioButton headfulMode;
 
     private ChromeDriverUpdater chromeDriverUpdater;
     private String selectedDirectory;
@@ -16,7 +19,7 @@ public class UpdaterGUI {
         frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
-        frame.setPreferredSize(new Dimension(200, 100));
+        frame.setPreferredSize(new Dimension(200, 180));
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         frame.add(mainPanel);
@@ -37,8 +40,30 @@ public class UpdaterGUI {
         buttonPanel.add(browseButton);
         buttonPanel.add(installButton);
 
+        panel.add(createTypeSelectionCheckBoxes(), BorderLayout.CENTER);
         panel.add(platformComboBox, BorderLayout.NORTH);
         panel.add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+
+    private JPanel createTypeSelectionCheckBoxes() {
+        JPanel panel = new JPanel(new GridLayout(3, 1));
+        headlessMode = new JRadioButton("headless");
+        headlessMode.setSelected(true);
+        headfulMode = new JRadioButton("head included");
+        typeButtonGroup = new ButtonGroup();
+        typeButtonGroup.add(headlessMode);
+        typeButtonGroup.add(headfulMode);
+
+        JCheckBox driver = new JCheckBox("chrome driver");
+        driver.setSelected(true);
+        driver.setEnabled(false);
+
+        panel.add(headlessMode);
+        panel.add(headfulMode);
+        panel.add(driver);
+
+        return panel;
     }
 
     private JButton createBrowseButton() {
@@ -61,24 +86,28 @@ public class UpdaterGUI {
     private JButton createInstallButton() {
         JButton installButton = new JButton("Install");
         installButton.addActionListener(_ -> {
-
-
             if (selectedDirectory == null) {
                 selectedDirectory = System.getProperty("user.dir");
             }
-
             Platform selectedPlatform = (Platform) platformComboBox.getSelectedItem();
             chromeDriverUpdater = new ChromeDriverUpdater(selectedDirectory, selectedPlatform);
 
             int result = JOptionPane.showConfirmDialog(frame,
-                    "Are you sure you want to install "
+                    "Are you sure you want to install chrome for "
             + selectedPlatform + " at " + selectedDirectory + "?", "Confirm installation", JOptionPane.YES_NO_OPTION);
             if (result == JOptionPane.YES_OPTION) {
                 try {
                     String latestVersion = chromeDriverUpdater.getLatestVersion();
                     String currentVersion = chromeDriverUpdater.readManifest();
                     if (!currentVersion.equals(latestVersion)) {
-                        chromeDriverUpdater.install(latestVersion);
+                        ButtonModel selectionModel = typeButtonGroup.getSelection();
+                        if (selectionModel == headlessMode.getModel()) {
+                            chromeDriverUpdater.installHeadless(latestVersion);
+                        } else if (selectionModel == headfulMode.getModel()) {
+                            chromeDriverUpdater.installHeadful(currentVersion);
+                        } else {
+                            throw new RuntimeException("ruh roh!");
+                        }
                         JOptionPane.showMessageDialog(frame,
                                 "Installation successful: Version " + latestVersion);
                     } else {
