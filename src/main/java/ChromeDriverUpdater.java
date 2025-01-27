@@ -44,18 +44,18 @@ public class ChromeDriverUpdater {
     }
 
     /**
-     * doesnt work at all for headless versions, will remove or fix at some point
-     * @return the name of the manifest file which should correspond to the version number of both chrome and chromedriver
+     * Attempts to find the ".version" file that this program writes
+     * @return the version number if it exists
      */
-    public String readManifest() {
-        String manifestLocation = chromeDir + fs + "chrome-" + platform + fs + "chrome-" + platform + fs;
-        File directory = new File(manifestLocation);
+    public String readVCfile() {
+        String location = chromeDir + fs;
+        File directory = new File(location);
         if (directory.exists() && directory.isDirectory()) {
             String[] files = directory.list();
             if (files != null) {
                 for (String file : files) {
-                    if (file.endsWith(".manifest")) {
-                        System.out.print("Found manifest. ");
+                    if (file.endsWith(".version")) {
+                        System.out.print("Found version. ");
                         String version = file.substring(0, file.lastIndexOf("."));
                         System.out.println("Current version: " + version);
                         return version;
@@ -63,12 +63,28 @@ public class ChromeDriverUpdater {
                 }
             }
         }
-        return "failed to get version from manifest";
+        return "failed to get version";
     }
 
     /**
-     * GETs the latest version of Chrome for Testing.
-     * @return returns the latest version as a String
+     *
+     * @param versionNumber Creates an empty file using this parameter as filename with ".version" appended
+     * @return returns true if a file was successfully created (optional)
+     */
+
+    public boolean writeVCfile(String versionNumber) {
+        try {
+            File file = new File(chromeDir + fs + versionNumber + ".version");
+            return file.createNewFile();
+        } catch (IOException e) {
+            System.err.println("Failed to write chrome version control file. " + e.getMessage());
+        }
+        return false;
+    }
+
+    /**
+     * Sends an HTTP request to GET the latest version of Chrome for Testing.
+     * @return The latest version of Chrome for Testing
      */
     public String getLatestVersion() throws IOException {
         String urlString = "https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE";

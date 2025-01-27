@@ -98,16 +98,17 @@ public class UpdaterGUI {
             if (result == JOptionPane.YES_OPTION) {
                 try {
                     String latestVersion = chromeDriverUpdater.getLatestVersion();
-                    String currentVersion = chromeDriverUpdater.readManifest();
+                    String currentVersion = chromeDriverUpdater.readVCfile();
                     if (!currentVersion.equals(latestVersion)) {
                         ButtonModel selectionModel = typeButtonGroup.getSelection();
                         if (selectionModel == headlessMode.getModel()) {
                             chromeDriverUpdater.installHeadless(latestVersion);
                         } else if (selectionModel == headfulMode.getModel()) {
-                            chromeDriverUpdater.installHeadful(currentVersion);
+                            chromeDriverUpdater.installHeadful(latestVersion);
                         } else {
                             throw new RuntimeException("ruh roh!");
                         }
+                        chromeDriverUpdater.writeVCfile(latestVersion);
                         JOptionPane.showMessageDialog(frame,
                                 "Installation successful: Version " + latestVersion);
                     } else {
